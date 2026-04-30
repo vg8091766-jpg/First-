@@ -1,0 +1,94 @@
+"# ProjectPilot — Full-Stack Project Management
+
+A role-based project management app with JWT auth, projects, kanban tasks, and a dashboard.
+
+## Stack
+- **Frontend**: React 19, Tailwind, Shadcn/UI primitives, Phosphor Icons, React Router
+- **Backend**: FastAPI, Motor (MongoDB async), bcrypt, PyJWT
+- **Database**: MongoDB
+
+## Folder Structure
+```
+app/
+├── backend/
+│   ├── server.py            # FastAPI app, auth, projects, tasks, dashboard
+│   ├── requirements.txt
+│   └── .env                 # MONGO_URL, DB_NAME, JWT_SECRET, ADMIN_*, MEMBER_*
+├── frontend/
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── lib/api.js              # axios + token interceptor
+│   │   ├── context/AuthContext.js  # login/register/logout/me
+│   │   ├── components/
+│   │   │   ├── Layout.js           # sidebar + role-aware nav
+│   │   │   └── ProtectedRoute.js
+│   │   └── pages/
+│   │       ├── Login.js
+│   │       ├── Signup.js
+│   │       ├── Dashboard.js        # stats + project progress
+│   │       ├── Projects.js         # list + create/delete (admin)
+│   │       ├── ProjectDetail.js    # kanban board with tasks
+│   │       ├── MyTasks.js          # member-centric task list
+│   │       └── Members.js          # admin directory
+│   └── tailwind.config.js
+└── README.md
+```
+
+## REST API (prefix `/api`)
+
+### Auth
+| Method | Path | Body | Access |
+|---|---|---|---|
+| POST | `/auth/register` | `{email,password,name,role?}` | public |
+| POST | `/auth/login` | `{email,password}` | public |
+| GET | `/auth/me` | — | authenticated |
+
+### Users
+| GET | `/users` | — | authenticated |
+
+### Projects
+| POST | `/projects` | `{name,description,member_ids[]}` | admin |
+| GET | `/projects` | — | authenticated (scoped) |
+| GET | `/projects/{id}` | — | members + admin |
+| PUT | `/projects/{id}` | same as POST | admin |
+| DELETE | `/projects/{id}` | — | admin (also deletes tasks) |
+
+### Tasks
+| POST | `/projects/{id}/tasks` | `{title,description,deadline,assignee_id,status}` | admin |
+| GET | `/projects/{id}/tasks` | — | members + admin |
+| GET | `/tasks/mine` | — | authenticated |
+| PUT | `/tasks/{id}` | full task payload | admin |
+| PATCH | `/tasks/{id}/status` | `{status}` | admin or assignee |
+| DELETE | `/tasks/{id}` | — | admin |
+
+### Dashboard
+| GET | `/dashboard/stats` | — | authenticated (scoped) |
+
+## Running Locally
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+# set env vars in backend/.env
+uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+
+# Frontend
+cd frontend
+yarn install
+# REACT_APP_BACKEND_URL in frontend/.env
+yarn start
+```
+
+## Demo Accounts (seeded on startup)
+- **Admin** — `admin@example.com` / `admin123`
+- **Member** — `member@example.com` / `member123`
+
+## Deployment
+- **Emergent** — deploy directly from the Emergent platform. Frontend and backend
+  are orchestrated automatically.
+- **Railway** — provision MongoDB, create a service for `backend/` (start command
+  `uvicorn server:app --host 0.0.0.0 --port $PORT`), create a static service or
+  Render/Netlify site for `frontend/` with build `yarn build` and `REACT_APP_BACKEND_URL`
+  pointing to the Railway backend URL. Configure env vars `MONGO_URL`, `DB_NAME`,
+  `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `MEMBER_EMAIL`, `MEMBER_PASSWORD`.
+"
